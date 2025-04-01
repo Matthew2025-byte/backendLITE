@@ -1,2 +1,6 @@
-vscode/
+/vscode/
+/__pycache__/
+/backendLITE/__pycache__/
 .micropico
+
+server.py
