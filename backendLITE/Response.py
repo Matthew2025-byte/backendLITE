@@ -31,3 +31,11 @@ class Response:
             return 'image/gif'
         else:
             return 'application/octet-stream'
+        
+
+class Request:
+    method: str
+
+    def __init__(self, method: str):
+        self.method = method
+    

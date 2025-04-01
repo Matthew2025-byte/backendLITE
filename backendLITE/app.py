@@ -1,5 +1,6 @@
 import socket
 from .Response import Response
+from .Response import Request
 # Also uses micropython network and ujson modules
 
 
@@ -31,7 +32,7 @@ class backendLITE:
                     continue
                 method, route, protocol = request.splitlines()[0].split(" ")
 
-                response, headers = self.HandleRoute(route)
+                response, headers = self.HandleRoute(request)
 
                 print(f'{method} "{route}" {headers["status"]}')
 
@@ -61,7 +62,8 @@ class backendLITE:
         self.server_handlers[path] = func
 
 
-    def HandleRoute(self, route):
+    def HandleRoute(self, status_line):
+        method, route, protocol = status_line.splitlines()[0].split(" ")
         if route not in self.server_handlers:
             return "<h1>404 Not Found</h1>", {'status': 404, 'Content-Type': "text/html"}
         
@@ -113,5 +115,18 @@ class backendLITE:
 
 
 def jsonify(data):
-    import ujson
-    return ujson.dumps(data), {"Content-Type": "application/json"}
+    import json
+    return json.dumps(data), {"Content-Type": "application/json"}
+
+def render_template(file_location, **kwargs):
+    if not file_location.endswith(".html"):
+        raise Exception("render_template must use an HTML file")
+    try:
+        with open(file_location) as file:
+            template = str(file.read())
+
+            for key, value in kwargs.items():
+                template = template.replace(f"{{{{{key}}}}}", value)
+            return template, {"Content-Type": "text/html", "status": 200}
+    except FileNotFoundError:
+        return "<h1>404 Not Found</h1>", {"Content-Type": "text/html", "status": 404}
