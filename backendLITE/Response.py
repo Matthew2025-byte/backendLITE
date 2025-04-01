@@ -42,6 +42,8 @@ class Request:
     
 
     def __init__(self, request_message: str):
+        if not self.ValidRequest(request_message):
+            raise Exception(f"Invalid Request: {request_message}")
         self.method, self.route, _ = request_message.splitlines()[0].split(" ")
         self.request_headers, self.request_body = request_message.split("\r\n\r\n", 1)
 
@@ -53,3 +55,13 @@ class Request:
             key, value = item.split("=")
             form[key] = value
         return form
+
+
+
+    @staticmethod
+    def ValidRequest(request: str):
+        if not request.strip():
+            return False
+        if not request.splitlines():
+            return False
+        return True
