@@ -12,11 +12,12 @@ class backendLITE:
     """
     
     server_handlers = {}
+    _static_directory = "/static"
 
     def __init__(self):
         pass
 
-    def run(self, host="127.0.0.1", port=5000):
+    def run(self, host: str="127.0.0.1", port: int=5000):
         addr = (host, port)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(addr)
@@ -26,49 +27,50 @@ class backendLITE:
         while True:
             try:
                 conn, addr = s.accept()
-                request = conn.recv(1024).decode('utf-8')
-                if not self.ValidRequest(request):
-                    conn.close()
-                    continue
-                method, route, protocol = request.splitlines()[0].split(" ")
+                request = Request(conn.recv(1024).decode('utf-8'))
+                print(f'{request.method} "{request.route}"')
 
                 response, headers = self.HandleRoute(request)
-
-                print(f'{method} "{route}" {headers["status"]}')
 
                 Response.SendAndClose(conn, response, headers)
             except Exception as e:
                 print(f"Error: {e}")
 
-    @staticmethod
-    def ValidRequest(request):
-        if not request.strip():
-            print("Invalid Request: ", request.strip())
-            return False
-        if not request.splitlines():
-            return False
-        return True
+                
         
     @staticmethod
-    def send_file(filename):
+    def send_file(filename: str):
         try:
             with open(filename, 'r') as file:
                 content = file.read()
             return content, {"Content-Type": Response.GuessMimeType(filename)}
-        except FileNotFoundError:
+        except:
             return "<h1>404 File Not Found</h1>", {'status': 404, 'Content-Type': 'text/html'}
 
-    def add_route(self, path, func):
+    def add_route(self, path: str, func):
         self.server_handlers[path] = func
 
+    def staticdir(self, path):
+        self._static_directory = path
 
-    def HandleRoute(self, status_line):
-        method, route, protocol = status_line.splitlines()[0].split(" ")
+    def HandleRoute(self, request: Request):
+        method = request.method
+        route = request.route
+
+        if self._static_directory in route:
+            return self.Response_Headers(self.send_file(route[1:]))
+
         if route not in self.server_handlers:
             return "<h1>404 Not Found</h1>", {'status': 404, 'Content-Type': "text/html"}
         
-        response = self.server_handlers[route]()
-
+    
+        handler = self.server_handlers[route]
+        if "request" in handler.__code__.co_varnames[:handler.__code__.co_argcount]:
+            response = handler(request)
+        else:
+            response = handler()
+        
+        
         response, headers = self.Response_Headers(response)
 
         return response, headers
@@ -98,13 +100,13 @@ class backendLITE:
         return response, headers
     
 
-    def Connect_to_Wifi(self, SSID, Password):
+    def Connect_to_Wifi(self, SSID: str, Password: str):
         import network
         wlan = network.WLAN(network.STA_IF)
         wlan.active(True)
         wlan.connect(SSID, Password)
 
-    def AccessPoint(self, SSID, Password):
+    def AccessPoint(self, SSID: str, Password: str):
         import network
         ap = network.WLAN(network.AP_IF)
         ap.active(True)

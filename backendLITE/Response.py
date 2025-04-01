@@ -35,7 +35,21 @@ class Response:
 
 class Request:
     method: str
+    route: str
 
-    def __init__(self, method: str):
-        self.method = method
+    request_headers: str
+    request_body: str
     
+
+    def __init__(self, request_message: str):
+        self.method, self.route, _ = request_message.splitlines()[0].split(" ")
+        self.request_headers, self.request_body = request_message.split("\r\n\r\n", 1)
+
+
+    def form(self):
+        items = self.request_body.split("&")
+        form = {}
+        for item in items:
+            key, value = item.split("=")
+            form[key] = value
+        return form
