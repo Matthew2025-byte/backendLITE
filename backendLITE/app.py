@@ -1,4 +1,5 @@
 import socket
+import json
 from .Response import Response
 from .Response import Request
 # Also uses micropython network and ujson modules
@@ -46,6 +47,11 @@ class backendLITE:
             return content, {"Content-Type": Response.GuessMimeType(filename)}
         except:
             return "<h1>404 File Not Found</h1>", {'status': 404, 'Content-Type': 'text/html'}
+
+    def route(self, path):
+        def wrapper(func):
+            self.add_route(path, func)
+        return wrapper
 
     def add_route(self, path: str, func):
         self.server_handlers[path] = func
@@ -100,24 +106,13 @@ class backendLITE:
         return response, headers
     
 
-    def Connect_to_Wifi(self, SSID: str, Password: str):
-        import network
-        wlan = network.WLAN(network.STA_IF)
-        wlan.active(True)
-        wlan.connect(SSID, Password)
+    
 
-    def AccessPoint(self, SSID: str, Password: str):
-        import network
-        ap = network.WLAN(network.AP_IF)
-        ap.active(True)
-        ap.config(essid=SSID, password=Password)
-        print(f"Hosting access point: {SSID}")
-        print(f"Password: {Password}")
+    
 
 
 
 def jsonify(data):
-    import json
     return json.dumps(data), {"Content-Type": "application/json"}
 
 def render_template(file_location, **kwargs):
